@@ -2,152 +2,220 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>EGG AKINATOR 8-BIT</title>
+    <title>8-BIT EGG TREE</title>
     <style>
-        /* 8bit風フォント（代替案としてPixel風フォントを指定） */
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+        :root {
+            --pixel-size: 4px;
+            --bg-color: #000033;
+            --main-color: #ffffff;
+            --accent-color: #ffff00;
+        }
 
         body {
-            background-color: #222;
-            color: #fff;
-            font-family: 'Press+Start+2P', cursive, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        #game-container {
-            border: 4px solid #fff;
-            padding: 20px;
-            max-width: 500px;
-            text-align: center;
-            background-color: #000;
-            box-shadow: 10px 10px 0px #555;
-        }
-
-        h1 { font-size: 18px; color: #ffeb3b; margin-bottom: 30px; }
-        p { font-size: 12px; margin-bottom: 20px; }
-
-        .btn-container {
+            background-color: var(--bg-color);
+            color: var(--main-color);
+            font-family: 'DotGothic16', sans-serif;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            align-items: center;
+            padding-top: 50px;
+            margin: 0;
+            image-rendering: pixelated;
+        }
+
+        /* 8bit風の枠線 */
+        .pixel-border {
+            border: var(--pixel-size) solid var(--main-color);
+            padding: 20px;
+            background: #000;
+            box-shadow: 8px 8px 0px #555;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--accent-color);
+            text-shadow: 4px 4px #aa0000;
+            margin-bottom: 30px;
+        }
+
+        /* 樹形図（ツリー）の視覚表現 */
+        .tree-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .node-parent {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .node-current {
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-bottom: 2px dashed #fff;
+        }
+
+        .tree-branch {
+            font-size: 24px;
+            margin: -10px 0 10px 0;
+            color: var(--accent-color);
+        }
+
+        /* 選択ボタン */
+        .options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
         button {
-            background-color: #444;
+            background: #000;
             color: #fff;
-            border: 2px solid #fff;
-            padding: 10px;
-            font-family: 'Press+Start+2P', cursive;
-            font-size: 10px;
+            border: var(--pixel-size) solid #fff;
+            padding: 10px 20px;
+            font-family: 'DotGothic16', sans-serif;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.1s;
+            position: relative;
         }
 
         button:hover {
-            background-color: #fff;
+            background: var(--accent-color);
             color: #000;
         }
 
-        .result {
+        button::after {
+            content: '';
+            position: absolute;
+            top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border: 2px solid #000;
+            pointer-events: none;
+        }
+
+        .result-box {
+            font-size: 28px;
             color: #00ff00;
-            font-size: 16px;
-            text-shadow: 2px 2px #005500;
+            animation: blink 0.5s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <h1>EGG QUEST</h1>
-    <div id="question-area">
-        <p id="question-text">たまごを...？</p>
-        <div class="btn-container" id="button-area">
+    <h1>EGG SELECTOR ver 1.0</h1>
+
+    <div class="pixel-border">
+        <div id="game-ui">
+            <div class="tree-container">
+                <div id="parent-text" class="node-parent"></div>
+                <div id="current-text" class="node-current">たまご</div>
+                <div class="tree-branch">▼</div>
             </div>
+
+            <div id="action-area">
+                <div class="options" id="options-buttons">
+                    </div>
+            </div>
+        </div>
     </div>
-</div>
 
 <script>
-    // 分岐データ構造
-    const tree = {
-        question: "たまごを...",
-        options: [
+    const data = {
+        name: "たまご",
+        children: [
             {
-                text: "割らない",
-                next: {
-                    question: "どうやって火を通す？",
-                    options: [
-                        { text: "ゆでる（低温）", result: "温泉卵" },
-                        { text: "ゆでる（高温）", result: "ゆで卵" }
-                    ]
-                }
+                name: "割らない",
+                children: [
+                    {
+                        name: "ゆでる",
+                        children: [
+                            { name: "温泉卵", result: true },
+                            { name: "ゆで卵", result: true }
+                        ]
+                    }
+                ]
             },
             {
-                text: "割る",
-                next: {
-                    question: "中身を...",
-                    options: [
-                        {
-                            text: "混ぜない",
-                            next: {
-                                question: "どう調理する？",
-                                options: [
-                                    { text: "焼く", result: "目玉焼き" },
-                                    { text: "ゆでる", result: "ポーチドエッグ" },
-                                    { text: "揚げる", result: "フライドエッグ" }
-                                ]
-                            }
-                        },
-                        {
-                            text: "混ぜる",
-                            next: {
-                                question: "メインの工程は？",
-                                options: [
-                                    { text: "焼く", result: "卵焼き・オムレツ" },
-                                    { text: "蒸す", result: "茶碗蒸し" },
-                                    { text: "煮る・汁物", result: "卵スープ・親子丼" },
-                                    { text: "生で使う", result: "卵かけご飯" }
-                                ]
-                            }
-                        }
-                    ]
-                }
+                name: "割る",
+                children: [
+                    {
+                        name: "混ぜない",
+                        children: [
+                            { name: "焼く", children: [{name: "目玉焼き", result: true}] },
+                            { name: "ゆでる", children: [{name: "ポーチドエッグ", result: true}] },
+                            { name: "揚げる", children: [{name: "フライドエッグ", result: true}] }
+                        ]
+                    },
+                    {
+                        name: "混ぜる",
+                        children: [
+                            { name: "焼く", children: [{name: "卵焼き", result: true}] },
+                            { name: "蒸す", children: [{name: "茶碗蒸し", result: true}] },
+                            { name: "煮る・汁物", children: [{name: "親子丼", result: true}] },
+                            { name: "生で使う", children: [{name: "卵かけご飯", result: true}] }
+                        ]
+                    }
+                ]
             }
         ]
     };
 
-    function renderNode(node) {
-        const questionText = document.getElementById('question-text');
-        const buttonArea = document.getElementById('button-area');
-        
-        buttonArea.innerHTML = ''; // ボタンをクリア
+    let history = [];
 
-        if (node.result) {
-            // 最終結果の表示
-            questionText.innerHTML = "キミが作るのは...<br><br><span class='result'>[" + node.result + "]</span>";
-            const resetBtn = document.createElement('button');
-            resetBtn.innerText = "最初に戻る";
-            resetBtn.onclick = () => renderNode(tree);
-            buttonArea.appendChild(resetBtn);
+    function updateUI(currentNode) {
+        const parentText = document.getElementById('parent-text');
+        const currentText = document.getElementById('current-text');
+        const optionsButtons = document.getElementById('options-buttons');
+
+        // 親の履歴を表示
+        parentText.innerText = history.join(' > ');
+        
+        // 現在のノードを表示
+        currentText.innerText = currentNode.name;
+
+        // ボタンエリアをクリア
+        optionsButtons.innerHTML = '';
+
+        if (currentNode.result) {
+            // 最終結果
+            currentText.classList.add('result-box');
+            const retryBtn = document.createElement('button');
+            retryBtn.innerText = "リトライ";
+            retryBtn.onclick = () => {
+                history = [];
+                currentText.classList.remove('result-box');
+                updateUI(data);
+            };
+            optionsButtons.appendChild(retryBtn);
         } else {
-            // 次の質問を表示
-            questionText.innerText = node.question;
-            node.options.forEach(opt => {
+            // 選択肢の生成
+            currentNode.children.forEach(child => {
                 const btn = document.createElement('button');
-                btn.innerText = opt.text;
-                btn.onclick = () => renderNode(opt.next || {result: opt.result});
-                buttonArea.appendChild(btn);
+                btn.innerText = child.name;
+                btn.onclick = () => {
+                    history.push(currentNode.name);
+                    updateUI(child);
+                };
+                optionsButtons.appendChild(btn);
             });
         }
     }
 
-    // 初回起動
-    renderNode(tree);
+    // 初期化
+    updateUI(data);
 </script>
-
 </body>
 </html>
