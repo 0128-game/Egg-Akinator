@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>EGG AKINATOR 8-BIT</title>
+    <style>
+        /* 8bit風フォント（代替案としてPixel風フォントを指定） */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: 'Press+Start+2P', cursive, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        #game-container {
+            border: 4px solid #fff;
+            padding: 20px;
+            max-width: 500px;
+            text-align: center;
+            background-color: #000;
+            box-shadow: 10px 10px 0px #555;
+        }
+
+        h1 { font-size: 18px; color: #ffeb3b; margin-bottom: 30px; }
+        p { font-size: 12px; margin-bottom: 20px; }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            background-color: #444;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px;
+            font-family: 'Press+Start+2P', cursive;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        button:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
+        .result {
+            color: #00ff00;
+            font-size: 16px;
+            text-shadow: 2px 2px #005500;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>EGG QUEST</h1>
+    <div id="question-area">
+        <p id="question-text">たまごを...？</p>
+        <div class="btn-container" id="button-area">
+            </div>
+    </div>
+</div>
+
+<script>
+    // 分岐データ構造
+    const tree = {
+        question: "たまごを...",
+        options: [
+            {
+                text: "割らない",
+                next: {
+                    question: "どうやって火を通す？",
+                    options: [
+                        { text: "ゆでる（低温）", result: "温泉卵" },
+                        { text: "ゆでる（高温）", result: "ゆで卵" }
+                    ]
+                }
+            },
+            {
+                text: "割る",
+                next: {
+                    question: "中身を...",
+                    options: [
+                        {
+                            text: "混ぜない",
+                            next: {
+                                question: "どう調理する？",
+                                options: [
+                                    { text: "焼く", result: "目玉焼き" },
+                                    { text: "ゆでる", result: "ポーチドエッグ" },
+                                    { text: "揚げる", result: "フライドエッグ" }
+                                ]
+                            }
+                        },
+                        {
+                            text: "混ぜる",
+                            next: {
+                                question: "メインの工程は？",
+                                options: [
+                                    { text: "焼く", result: "卵焼き・オムレツ" },
+                                    { text: "蒸す", result: "茶碗蒸し" },
+                                    { text: "煮る・汁物", result: "卵スープ・親子丼" },
+                                    { text: "生で使う", result: "卵かけご飯" }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    };
+
+    function renderNode(node) {
+        const questionText = document.getElementById('question-text');
+        const buttonArea = document.getElementById('button-area');
+        
+        buttonArea.innerHTML = ''; // ボタンをクリア
+
+        if (node.result) {
+            // 最終結果の表示
+            questionText.innerHTML = "キミが作るのは...<br><br><span class='result'>[" + node.result + "]</span>";
+            const resetBtn = document.createElement('button');
+            resetBtn.innerText = "最初に戻る";
+            resetBtn.onclick = () => renderNode(tree);
+            buttonArea.appendChild(resetBtn);
+        } else {
+            // 次の質問を表示
+            questionText.innerText = node.question;
+            node.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.innerText = opt.text;
+                btn.onclick = () => renderNode(opt.next || {result: opt.result});
+                buttonArea.appendChild(btn);
+            });
+        }
+    }
+
+    // 初回起動
+    renderNode(tree);
+</script>
+
+</body>
+</html>
