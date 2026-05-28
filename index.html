@@ -2,220 +2,197 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>8-BIT EGG TREE</title>
+    <title>8-BIT EGG TREE ARCHIVE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
 
         :root {
-            --pixel-size: 4px;
-            --bg-color: #000033;
-            --main-color: #ffffff;
-            --accent-color: #ffff00;
+            --bg-color: #000022;
+            --line-color: #ffffff;
+            --node-bg: #444;
+            --accent: #ffff00;
         }
 
         body {
             background-color: var(--bg-color);
-            color: var(--main-color);
+            color: #fff;
             font-family: 'DotGothic16', sans-serif;
+            margin: 0;
+            padding: 40px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 50px;
-            margin: 0;
-            image-rendering: pixelated;
-        }
-
-        /* 8bit風の枠線 */
-        .pixel-border {
-            border: var(--pixel-size) solid var(--main-color);
-            padding: 20px;
-            background: #000;
-            box-shadow: 8px 8px 0px #555;
-            max-width: 600px;
-            width: 90%;
-            text-align: center;
+            overflow-x: auto;
         }
 
         h1 {
-            font-size: 24px;
-            color: var(--accent-color);
+            color: var(--accent);
             text-shadow: 4px 4px #aa0000;
-            margin-bottom: 30px;
+            font-size: 24px;
+            margin-bottom: 40px;
+            border: 4px solid #fff;
+            padding: 10px 20px;
+            background: #000;
         }
 
-        /* 樹形図（ツリー）の視覚表現 */
-        .tree-container {
-            margin: 20px 0;
+        /* ツリー全体のコンテナ（左から右へ） */
+        .tree {
             display: flex;
             flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .tree ul {
+            padding-left: 40px;
+            position: relative;
+            transition: all 0.5s;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 横の枝線 */
+        .tree li {
+            position: relative;
+            padding: 10px 0;
+            display: flex;
             align-items: center;
         }
 
-        .node-parent {
-            color: #aaa;
-            font-size: 14px;
-            margin-bottom: 5px;
+        .tree li::before {
+            content: '';
+            position: absolute;
+            left: -40px;
+            top: 50%;
+            border-top: 4px solid var(--line-color);
+            width: 40px;
         }
 
-        .node-current {
-            font-size: 20px;
-            margin-bottom: 15px;
-            padding: 10px;
-            border-bottom: 2px dashed #fff;
+        /* 縦の枝線 */
+        .tree li::after {
+            content: '';
+            position: absolute;
+            left: -40px;
+            top: 0;
+            border-left: 4px solid var(--line-color);
+            height: 100%;
         }
 
-        .tree-branch {
-            font-size: 24px;
-            margin: -10px 0 10px 0;
-            color: var(--accent-color);
-        }
+        .tree li:first-child::after { height: 50%; top: 50%; }
+        .tree li:last-child::after { height: 50%; }
+        .tree li:only-child::after { display: none; }
 
-        /* 選択ボタン */
-        .options {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            background: #000;
+        /* ノードのデザイン（8bitボタン風） */
+        .node {
+            background: var(--node-bg);
+            border: 4px solid #fff;
+            padding: 8px 16px;
+            text-decoration: none;
             color: #fff;
-            border: var(--pixel-size) solid #fff;
-            padding: 10px 20px;
-            font-family: 'DotGothic16', sans-serif;
-            font-size: 16px;
-            cursor: pointer;
+            font-size: 14px;
+            display: inline-block;
+            white-space: nowrap;
             position: relative;
+            z-index: 1;
+            box-shadow: 4px 4px 0px #000;
+            cursor: pointer;
         }
 
-        button:hover {
-            background: var(--accent-color);
+        .node:hover {
+            background: var(--accent);
             color: #000;
         }
 
-        button::after {
-            content: '';
-            position: absolute;
-            top: -4px; left: -4px; right: -4px; bottom: -4px;
-            border: 2px solid #000;
-            pointer-events: none;
-        }
-
-        .result-box {
-            font-size: 28px;
+        /* 最終結果（リザルトノード） */
+        .result {
+            border-color: #00ff00;
             color: #00ff00;
-            animation: blink 0.5s step-end infinite;
+            font-weight: bold;
         }
 
-        @keyframes blink {
-            50% { opacity: 0; }
+        .result::after {
+            content: ' [OK]';
+            font-size: 10px;
+        }
+
+        /* ルート要素（たまご）は線を消す */
+        .tree > ul { padding-left: 0; }
+        .tree > ul > li::before, .tree > ul > li::after { display: none; }
+
+        .info-panel {
+            margin-top: 30px;
+            border: 2px dashed var(--accent);
+            padding: 15px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
 <body>
 
-    <h1>EGG SELECTOR ver 1.0</h1>
+    <h1>EGG RECIPE TREE</h1>
 
-    <div class="pixel-border">
-        <div id="game-ui">
-            <div class="tree-container">
-                <div id="parent-text" class="node-parent"></div>
-                <div id="current-text" class="node-current">たまご</div>
-                <div class="tree-branch">▼</div>
-            </div>
-
-            <div id="action-area">
-                <div class="options" id="options-buttons">
-                    </div>
-            </div>
-        </div>
+    <div class="tree" id="tree-root">
+        <ul>
+            <li>
+                <div class="node" onclick="show('起源の食材')">たまご</div>
+                <ul>
+                    <li>
+                        <div class="node" onclick="show('殻のまま加熱')">割らない</div>
+                        <ul>
+                            <li>
+                                <div class="node" onclick="show('水で煮る')">ゆでる</div>
+                                <ul>
+                                    <li><div class="node result" onclick="show('とろとろ')">温泉卵</div></li>
+                                    <li><div class="node result" onclick="show('しっかり')">ゆで卵</div></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <div class="node" onclick="show('中身を取り出す')">割る</div>
+                        <ul>
+                            <li>
+                                <div class="node" onclick="show('形状を保つ')">混ぜない</div>
+                                <ul>
+                                    <li><div class="node result" onclick="show('フライパン')">目玉焼き</div></li>
+                                    <li><div class="node result" onclick="show('お湯へ')">ポーチドエッグ</div></li>
+                                    <li><div class="node result" onclick="show('油で')">フライドエッグ</div></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="node" onclick="show('撹拌する')">混ぜる</div>
+                                <ul>
+                                    <li>
+                                        <div class="node">焼く</div>
+                                        <ul>
+                                            <li><div class="node result">卵焼き</div></li>
+                                            <li><div class="node result">オムレツ</div></li>
+                                        </ul>
+                                    </li>
+                                    <li><div class="node result">茶碗蒸し</div></li>
+                                    <li><div class="node result">親子丼</div></li>
+                                    <li><div class="node result">卵かけご飯</div></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
     </div>
 
-<script>
-    const data = {
-        name: "たまご",
-        children: [
-            {
-                name: "割らない",
-                children: [
-                    {
-                        name: "ゆでる",
-                        children: [
-                            { name: "温泉卵", result: true },
-                            { name: "ゆで卵", result: true }
-                        ]
-                    }
-                ]
-            },
-            {
-                name: "割る",
-                children: [
-                    {
-                        name: "混ぜない",
-                        children: [
-                            { name: "焼く", children: [{name: "目玉焼き", result: true}] },
-                            { name: "ゆでる", children: [{name: "ポーチドエッグ", result: true}] },
-                            { name: "揚げる", children: [{name: "フライドエッグ", result: true}] }
-                        ]
-                    },
-                    {
-                        name: "混ぜる",
-                        children: [
-                            { name: "焼く", children: [{name: "卵焼き", result: true}] },
-                            { name: "蒸す", children: [{name: "茶碗蒸し", result: true}] },
-                            { name: "煮る・汁物", children: [{name: "親子丼", result: true}] },
-                            { name: "生で使う", children: [{name: "卵かけご飯", result: true}] }
-                        ]
-                    }
-                ]
-            }
-        ]
-    };
+    <div class="info-panel">
+        <div id="msg">ノードを選択してください...</div>
+    </div>
 
-    let history = [];
-
-    function updateUI(currentNode) {
-        const parentText = document.getElementById('parent-text');
-        const currentText = document.getElementById('current-text');
-        const optionsButtons = document.getElementById('options-buttons');
-
-        // 親の履歴を表示
-        parentText.innerText = history.join(' > ');
-        
-        // 現在のノードを表示
-        currentText.innerText = currentNode.name;
-
-        // ボタンエリアをクリア
-        optionsButtons.innerHTML = '';
-
-        if (currentNode.result) {
-            // 最終結果
-            currentText.classList.add('result-box');
-            const retryBtn = document.createElement('button');
-            retryBtn.innerText = "リトライ";
-            retryBtn.onclick = () => {
-                history = [];
-                currentText.classList.remove('result-box');
-                updateUI(data);
-            };
-            optionsButtons.appendChild(retryBtn);
-        } else {
-            // 選択肢の生成
-            currentNode.children.forEach(child => {
-                const btn = document.createElement('button');
-                btn.innerText = child.name;
-                btn.onclick = () => {
-                    history.push(currentNode.name);
-                    updateUI(child);
-                };
-                optionsButtons.appendChild(btn);
-            });
+    <script>
+        function show(txt) {
+            document.getElementById('msg').innerText = "SYSTEM: " + txt + " を選択中...";
         }
-    }
-
-    // 初期化
-    updateUI(data);
-</script>
+    </script>
 </body>
 </html>
